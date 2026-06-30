@@ -3,5 +3,4 @@ dist/
 __pycache__/
 *.pyc
 backend/model/*.h5
-backend/model/*.json
 !backend/model/.gitkeep
