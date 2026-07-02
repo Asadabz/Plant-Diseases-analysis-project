@@ -2,6 +2,8 @@
 // prediction with human-readable disease info (symptoms, treatment,
 // prevention) so the existing UI components keep working unchanged.
 
+import { compressImage } from './imagescompress';
+
 export interface DetectionResult {
   diseaseName: string;
   confidence: number;
@@ -394,8 +396,11 @@ function buildResult(rawDisease: string, confidence: number): DetectionResult {
 }
 
 export async function analyzeLeaf(imageFile: File): Promise<DetectionResult> {
+  // Upload se pehle image resize/compress karo — low-memory crash rokne ke liye
+  const compressedBlob = await compressImage(imageFile, 800, 800, 0.8);
+
   const form = new FormData();
-  form.append('file', imageFile);
+  form.append('file', compressedBlob, 'leaf.jpg');
 
   const res = await fetch(`${API_URL}/predict`, { method: 'POST', body: form });
 
