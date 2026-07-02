@@ -17,7 +17,10 @@ export interface DetectionResult {
   isHealthy: boolean;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL =
+  (typeof window !== 'undefined' && (window as any).__RUNTIME_CONFIG__?.VITE_API_URL) ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:8000';
 
 interface PredictResponse {
   disease: string;

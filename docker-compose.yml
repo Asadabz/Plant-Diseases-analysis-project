@@ -16,6 +16,8 @@ services:
       args:
         VITE_API_URL: http://localhost:8000
     container_name: leaf-scan-frontend
+    environment:
+      - API_URL=http://backend:8000
     ports:
       - "5173:80"
     depends_on:

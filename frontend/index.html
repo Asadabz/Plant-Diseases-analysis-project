@@ -19,6 +19,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Runtime config injected by docker-entrypoint.sh — must load before React -->
+    <script src="/config.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

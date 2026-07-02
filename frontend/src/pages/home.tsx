@@ -20,8 +20,12 @@ export default function Home() {
 
   const handleFile = async (f: File) => {
     if (!f.type.startsWith("image/")) return;
+    if (f.size > 15 * 1024 * 1024) {
+      setError("Image is too large (>15 MB). Please use a smaller photo.");
+      return;
+    }
+    setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(f); });
     setFile(f);
-    setPreview(URL.createObjectURL(f));
     setIsAnalyzing(true);
     setResult(null);
     setError(null);
@@ -41,6 +45,7 @@ export default function Home() {
   };
 
   const handleReset = () => {
+    if (preview) URL.revokeObjectURL(preview);
     setFile(null); setPreview(null); setResult(null);
     setIsAnalyzing(false); setProgress(0); setError(null);
   };
@@ -145,12 +150,20 @@ export default function Home() {
             >
               <input
                 type="file" ref={fileInputRef} className="hidden" accept="image/*"
-                onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                  e.target.value = ""; // reset so the input doesn't hold a stale reference
+                }}
                 data-testid="input-file-upload"
               />
               <input
                 type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment"
-                onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                  e.target.value = ""; // reset so Android camera doesn't hold onto the previous capture in memory
+                }}
                 data-testid="input-camera-capture"
               />
 
