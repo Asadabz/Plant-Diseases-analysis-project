@@ -15,6 +15,7 @@ import io
 import json
 import os
 
+import cv2
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +25,8 @@ MODEL_DIR = os.environ.get("MODEL_DIR", "model")
 WEIGHTS_PATH = os.path.join(MODEL_DIR, "plant_disease_model.keras")
 CLASS_NAMES_PATH = os.path.join(MODEL_DIR, "class_names.json")
 IMG_SIZE = (224, 224)
+GREEN_THRESHOLD = 15.0  # % of pixels that must be green-ish for image to be considered a leaf
+CONFIDENCE_THRESHOLD = 0.16  # model ki top prediction 60% se kam confident ho to reject karo
 
 app = FastAPI(title="Plant Disease Detector API")
 
@@ -52,6 +55,29 @@ def build_model(num_classes):
     x = tf.keras.layers.Dense(128, activation="relu")(x)
     outputs = tf.keras.layers.Dense(num_classes, activation="softmax")(x)
     return tf.keras.Model(inputs, outputs)
+
+
+def is_leaf_image(image_bytes: bytes, green_threshold: float = GREEN_THRESHOLD) -> bool:
+    """
+    Check karta hai ki image me kaafi green pixels hain ya nahi.
+    Returns True agar leaf/plant jaisi lagti hai, False agar random object.
+    """
+    pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    img_array = np.array(pil_image)
+
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+    img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+
+    lower_green = np.array([25, 40, 40])
+    upper_green = np.array([90, 255, 255])
+
+    mask = cv2.inRange(img_hsv, lower_green, upper_green)
+
+    green_pixel_count = np.count_nonzero(mask)
+    total_pixels = mask.shape[0] * mask.shape[1]
+    green_percentage = (green_pixel_count / total_pixels) * 100
+
+    return green_percentage >= green_threshold
 
 
 @app.on_event("startup")
@@ -96,6 +122,16 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Please upload an image file.")
 
     contents = await file.read()
+
+    # Layer 1 — green pixel check (model call se pehle hi non-leaf reject)
+    if not is_leaf_image(contents):
+        return {
+            "status": "invalid",
+            "disease": None,
+            "confidence": 0.0,
+            "message": "This doesn't appear to be a valid leaf image. Please upload a clear leaf photo.",
+        }
+
     try:
         image = Image.open(io.BytesIO(contents)).convert("RGB").resize(IMG_SIZE)
     except Exception:
@@ -106,6 +142,16 @@ async def predict(file: UploadFile = File(...)):
     img_array = np.expand_dims(np.array(image).astype("float32"), axis=0)
     prediction = model.predict(img_array)[0]
     top_idx = int(np.argmax(prediction))
+    top_confidence = float(prediction[top_idx])
+
+    # Layer 2 — confidence threshold (low-confidence predictions reject)
+    if top_confidence < CONFIDENCE_THRESHOLD:
+        return {
+            "status": "invalid",
+            "disease": None,
+            "confidence": round(top_confidence, 4),
+            "message": "Model is prediction ke baare me confident nahi hai. Please clear leaf ki photo upload karo.",
+        }
 
     top3_idx = prediction.argsort()[-3:][::-1]
     top3 = [
@@ -114,7 +160,8 @@ async def predict(file: UploadFile = File(...)):
     ]
 
     return {
+        "status": "success",
         "disease": class_names[top_idx],
-        "confidence": round(float(prediction[top_idx]), 4),
+        "confidence": round(top_confidence, 4),
         "top3": top3,
     }

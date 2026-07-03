@@ -4,3 +4,4 @@ tensorflow==2.16.1
 numpy
 pillow
 python-multipart==0.0.9
+opencv-python-headless

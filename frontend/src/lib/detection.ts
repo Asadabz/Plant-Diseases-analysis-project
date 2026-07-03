@@ -412,6 +412,14 @@ export async function analyzeLeaf(imageFile: File): Promise<DetectionResult> {
     throw new Error(body.detail || `Diagnosis failed (${res.status})`);
   }
 
-  const data: PredictResponse = await res.json();
+  const data: PredictResponse & { status?: string; message?: string } = await res.json();
+
+  // NAYA CHECK — agar backend ne image ko invalid (non-leaf / low-confidence) mark kiya hai
+  if (data.status === 'invalid' || !data.disease) {
+    throw new Error(
+      data.message || "This doesn't appear to be a valid leaf image. Please upload a clear leaf photo."
+    );
+  }
+
   return buildResult(data.disease, data.confidence);
 }
