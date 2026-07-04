@@ -9,6 +9,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import Home from "@/pages/home";
 import Library from "@/pages/library";
 import About from "@/pages/about";
+import ModelInfo from "@/pages/model-info";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/library" component={Library} />
+        <Route path="/model-info" component={ModelInfo} />
         <Route path="/about" component={About} />
         <Route component={NotFound} />
       </Switch>

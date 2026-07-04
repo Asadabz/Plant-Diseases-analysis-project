@@ -34,6 +34,47 @@ type KnowledgeEntry = Omit<DetectionResult, 'diseaseName' | 'confidence' | 'affe
 };
 
 const knowledgeBase: Record<string, KnowledgeEntry> = {
+  decorativeAloeVera: {
+    diseaseName: 'Aloe Vera (Decorative Plant)',
+    severity: 'Mild',
+    affectedPlants: ['Ornamental / Indoor'],
+    description: 'This is an Aloe Vera plant. It looks like a decorative/ornamental houseplant rather than a crop leaf, so our disease detection isn\u2019t designed to diagnose it.',
+    symptoms: ['Identified as a decorative Aloe Vera plant', 'Disease detection does not apply to this plant type'],
+    treatment: ['General plant care: water sparingly, allow soil to dry between waterings', 'Keep in bright, indirect sunlight'],
+    prevention: ['Avoid overwatering to prevent root rot', 'Use well-draining potting soil'],
+    isHealthy: true,
+  },
+  decorativeMonstera: {
+    diseaseName: 'Monstera Deliciosa (Decorative Plant)',
+    severity: 'Mild',
+    affectedPlants: ['Ornamental / Indoor'],
+    description: 'This is a Monstera Deliciosa plant. It looks like a decorative/ornamental houseplant rather than a crop leaf, so our disease detection isn\u2019t designed to diagnose it.',
+    symptoms: ['Identified as a decorative Monstera Deliciosa plant', 'Disease detection does not apply to this plant type'],
+    treatment: ['General plant care: water when top soil is dry', 'Provide bright, indirect light and occasional misting'],
+    prevention: ['Wipe leaves periodically to prevent dust buildup', 'Avoid direct harsh sunlight which can scorch leaves'],
+    isHealthy: true,
+  },
+  decorativeSnakePlant: {
+    diseaseName: 'Snake Plant (Decorative Plant)',
+    severity: 'Mild',
+    affectedPlants: ['Ornamental / Indoor'],
+    description: 'This is a Snake Plant (Sansevieria). It looks like a decorative/ornamental houseplant rather than a crop leaf, so our disease detection isn\u2019t designed to diagnose it.',
+    symptoms: ['Identified as a decorative Snake Plant', 'Disease detection does not apply to this plant type'],
+    treatment: ['General plant care: water infrequently, let soil dry out fully', 'Tolerates low light but prefers indirect sunlight'],
+    prevention: ['Avoid overwatering, the most common cause of issues in this plant', 'Ensure pot has good drainage'],
+    isHealthy: true,
+  },
+  decorativeArecaPalm: {
+    diseaseName: 'Areca Palm (Decorative Plant)',
+    severity: 'Mild',
+    affectedPlants: ['Ornamental / Indoor'],
+    description: 'This is an Areca Palm. It looks like a decorative/ornamental houseplant rather than a crop leaf, so our disease detection isn\u2019t designed to diagnose it.',
+    symptoms: ['Identified as a decorative Areca Palm', 'Disease detection does not apply to this plant type'],
+    treatment: ['General plant care: keep soil lightly moist, not soggy', 'Provide bright, indirect light and regular misting'],
+    prevention: ['Avoid direct sun which can yellow the fronds', 'Maintain moderate humidity around the plant'],
+    isHealthy: true,
+  },
+
   healthy: {
     diseaseName: 'Healthy Leaf',
     severity: 'Mild',
@@ -310,6 +351,10 @@ const knowledgeBase: Record<string, KnowledgeEntry> = {
 };
 
 const matchRules: [RegExp, keyof typeof knowledgeBase][] = [
+  [/aloe vera/, 'decorativeAloeVera'],
+  [/monstera/, 'decorativeMonstera'],
+  [/snake plant/, 'decorativeSnakePlant'],
+  [/areca palm/, 'decorativeArecaPalm'],
   [/healthy/, 'healthy'],
   [/yellow leaf curl/, 'yellowLeafCurl'],
   [/mosaic/, 'mosaicVirus'],
@@ -336,6 +381,11 @@ const matchRules: [RegExp, keyof typeof knowledgeBase][] = [
   [/spider mite|mite/, 'mites'],
   [/anthracnose/, 'anthracnose'],
   [/wilt/, 'wilt'],
+  // Catch-all: any class that's just "<plant name> leaf" with no disease
+  // keyword above is one of our canonical healthy classes (e.g. "Apple_leaf",
+  // "tomato leaf", "grape leaf"). Must stay LAST so specific diseases above
+  // (which also end in "leaf", e.g. "leaf mold", "leaf spot") match first.
+  [/ leaf$/, 'healthy'],
 ];
 
 function normalize(className: string): string {
@@ -381,7 +431,7 @@ function buildResult(rawDisease: string, confidence: number): DetectionResult {
   const knowledge = lookupKnowledge(rawDisease);
   const crop = extractCrop(rawDisease);
   const diseaseName = knowledge.isHealthy
-    ? 'Healthy Leaf'
+    ? knowledge.diseaseName
     : prettifyDiseaseName(rawDisease);
 
   return {

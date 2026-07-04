@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { ScanLine, LayoutGrid, Info, Sprout, Leaf } from "lucide-react";
+import { ScanLine, LayoutGrid, Info, Sprout, Leaf, Cpu } from "lucide-react";
 
 const links = [
   { href: "/", label: "Detection", icon: ScanLine, desc: "Upload & analyze" },
   { href: "/library", label: "Disease Library", icon: LayoutGrid, desc: "Browse pathogens" },
+  { href: "/model-info", label: "Model Info", icon: Cpu, desc: "Trained classes" },
   { href: "/about", label: "About", icon: Info, desc: "How it works" },
 ];
 

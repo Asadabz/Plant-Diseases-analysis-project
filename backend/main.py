@@ -26,7 +26,7 @@ WEIGHTS_PATH = os.path.join(MODEL_DIR, "plant_disease_model.keras")
 CLASS_NAMES_PATH = os.path.join(MODEL_DIR, "class_names.json")
 IMG_SIZE = (224, 224)
 GREEN_THRESHOLD = 15.0  # % of pixels that must be green-ish for image to be considered a leaf
-CONFIDENCE_THRESHOLD = 0.16  # model ki top prediction 60% se kam confident ho to reject karo
+CONFIDENCE_THRESHOLD = 0.20  # model ki top prediction 60% se kam confident ho to reject karo
 
 app = FastAPI(title="Plant Disease Detector API")
 
